@@ -6,11 +6,6 @@
 
 
 
-// The global variable that is used to initialize the comments.
-const comments = [
-  "I've done this and it's amazing!  I'll never forget it.",
-  "I'm thinking about this as well."
-];
 
 // Create an instance of the Discussion prototype for task 1 here.
 // IMPORTANT POINT: methods need to be attached to the prototype before the
@@ -18,31 +13,72 @@ const comments = [
 // available to them.
 //
 
+
+
+function User(name, surname, avatar) {
+  this.name = name;
+  this.surname = surname;
+  this.avatar = avatar;
+}
+
+let halit = new User("halit", "celik", "assets/images/avatar.png");
+let anonUser = new User("anonymous", "user", "assets/images/avatar.png");
+
+function Comment(user, commentText) {
+  this.user = user;
+  this.text = commentText;
+  this.time = new Date;
+}
+
+let initialComment = new Comment(halit, "initial comment");
+let comment1 = new Comment(halit, "I've done this and it's amazing!  I'll never forget it.");
+let comment2 = new Comment(anonUser, "I'm thinking about this as well.");
+
+
+function Discussion(initialComments) {
+  this.comments = initialComments;
+};
+
+
+
+
+// The global variable that is used to initialize the comments.
+const comments = [comment1, comment2];
+
 // This function builds all of the nodes needed for one comment in the Idea
 // page, then appends it to the bottom of the list containing the comments.
 // Attach this function as a method of the Discussion prototype in task 2.
-let renderComment = (message) => {
+
+// This function sets the text for the comment count in two places.  The value
+// for the number of comments is hard-coded to 2.
+// Attach this function as a method of the Discussion prototype in task 2.
+let updateCommentCount = function() {
+  var numberOfComments = this.comments.length + ' comments';
+  document.querySelector('.goal__meta a').textContent = numberOfComments;
+  document.querySelector('.comments__title span').textContent = numberOfComments;
+}
+
+
+Discussion.prototype.renderComment = function(userComment) {
   let commentParagraph = document.createElement('p');
-  commentParagraph.textContent = message;
+  commentParagraph.textContent = userComment.text;
 
   let commentDate = document.createElement('time');
-  commentDate.datetime = new Date().toISOString();
-  commentDate.textContent = 'Just now';
+  commentDate.textContent = " " + userComment.time;
 
   let commentTitle = document.createElement('h3');
   commentTitle.className = 'comment__title';
-  commentTitle.appendChild(document.createTextNode('You '));
+  commentTitle.appendChild(document.createTextNode(userComment.user.name));
   commentTitle.appendChild(commentDate);
 
   let commentBody = document.createElement('div');
   commentBody.className = 'comment__body';
   commentBody.appendChild(commentTitle);
   commentBody.appendChild(commentParagraph);
-
   let commentAvatar = document.createElement('img');
   commentAvatar.className = 'avatar';
-  commentAvatar.src = 'assets/images/avatar.png';
-  commentAvatar.alt = 'Portrait of commenter';
+  commentAvatar.src = userComment.user.avatar;
+  commentAvatar.alt = 'Portrait of ' + userComment.user.name;
 
   let comment = document.createElement('li');
   comment.className = 'comment';
@@ -50,36 +86,33 @@ let renderComment = (message) => {
   comment.appendChild(commentBody);
 
   document.querySelector('#comments ul').appendChild(comment);
+  this.updateCommentCount()
+};
+
+Discussion.prototype.updateCommentCount = updateCommentCount;
+Discussion.prototype.renderInitialComments = function() {
+  for (i = 0; i < this.comments.length; i++) {
+    this.renderComment(this.comments[i]);
+  }
+  this.updateCommentCount();
 }
 
-// This function sets the text for the comment count in two places.  The value
-// for the number of comments is hard-coded to 2.
-// Attach this function as a method of the Discussion prototype in task 2.
-let updateCommentCount = function() {
-  var numberOfComments = 2 +' comments';
-  document.querySelector('.goal__meta a').textContent = numberOfComments;
-  document.querySelector('.comments__title span').textContent = numberOfComments;
+Discussion.prototype.addComment = function(newComment) {
+  this.comments.push(newComment);
+  this.renderComment(newComment);
+  this.updateCommentCount();
 }
 
-
-// Initialization: creates two comments and sets the comment count.
-// For task 4, create a prototype that contains these three calls.
-for(i=0; i<comments.length;i++) {
-  renderComment(comments[i]);
-}
-
-updateCommentCount();
-// End of initialization
-
-
-
+let discussion = new Discussion(comments)
+discussion.renderInitialComments()
+discussion.updateCommentCount()
 
 
 // This prototype represents the comment input and button.  It will need to be
 // modified for tasks 4 and 8.
 function AddCommentForm() {
   document.querySelector('.comments__input button')
-          .addEventListener('click', this.handleCommentSubmitted.bind(this));
+    .addEventListener('click', this.handleCommentSubmitted.bind(this));
 }
 
 AddCommentForm.prototype.takeAndClearMessage = function() {
@@ -92,7 +125,13 @@ AddCommentForm.prototype.takeAndClearMessage = function() {
 AddCommentForm.prototype.handleCommentSubmitted = function(e) {
   e.preventDefault();
   var message = this.takeAndClearMessage();
-
+  if (!message.trim()) {
+    console.log("Message cannot be empty!")
+    return;
+  }
+  let user = new User("anonymous", "anonymous", "assets/images/avatar.png")
+  comment = new Comment(user, message)
+  discussion.addComment(comment)
   // Task 4: render the comment using the Discussion prototype.
 }
 
